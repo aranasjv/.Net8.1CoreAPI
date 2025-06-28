@@ -20,6 +20,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactLocalhost",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+
+
 //add automapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
@@ -36,6 +48,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowReactLocalhost");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
