@@ -11,10 +11,12 @@ namespace TestAPI.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public EmployeeController(AppDbContext context)
+        public EmployeeController(AppDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         [HttpGet]
@@ -98,6 +100,37 @@ namespace TestAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("SaveFile")]
+        public IActionResult SaveFile()
+        {
+            try
+            {
+                var file = Request.Form.Files.FirstOrDefault();
+                if (file == null || file.Length == 0)
+                    return BadRequest("No file uploaded.");
+
+                var uploadsFolder = Path.Combine(_env.ContentRootPath, "Photos");
+
+                // Ensure the directory exists
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                var filePath = Path.Combine(uploadsFolder, file.FileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    file.CopyTo(stream);
+                }
+
+                return Ok(new { message = "File uploaded successfully.", fileName = file.FileName });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
 
     }
 }
