@@ -54,10 +54,6 @@ public class DepartmentController : ControllerBase
     {
         try
         {
-            bool isExist = await _service.IsDepartmentExist(deptDto.DepartmentName);
-            if (isExist)
-                return BadRequest("Department Name Already Exist.");
-
             var created = await _service.AddAsync(deptDto);
             return CreatedAtAction(nameof(GetDepartment), new { DepartmentId = created.DepartmentId }, created);
         }

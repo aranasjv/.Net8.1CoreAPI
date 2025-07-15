@@ -1,3 +1,4 @@
 /.vs
 /TestAPI/bin
 /TestAPI/obj
+/TestAPI/appsettings.Development.json

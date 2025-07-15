@@ -57,26 +57,38 @@ namespace TestAPI.Services
         public async Task<DepartmentDto> AddAsync(DepartmentDto dto)
         {
             var department = _mapper.Map<Department>(dto);
+
             // Always check existence in both EF and MongoDB before insert
             bool existsInEf = await _repository.ExistsAsync(department.DepartmentName);
             bool existsInMongo = await _mongoRepository.ExistsAsync(department.DepartmentName);
-            if (existsInEf && existsInMongo)
-            {
-                // Optionally, throw or return null to indicate duplicate
-                throw new InvalidOperationException("Department Name Already Exists in EF and MongoDB.");
-            }
-            // Insert into EF
-            if (!existsInEf)
-            {
-                await _repository.AddAsync(department);
-            }
+            if (existsInEf || existsInMongo)
+                throw new InvalidOperationException("Department Name Already Exists in EF or MongoDB.");
 
-            // Insert into MongoDB
-            if (!existsInMongo)
-            {
-                await _mongoRepository.AddAsync(department);
-            }
-           
+            // Get max DepartmentId from both sources
+            int maxEfId = 0;
+            int maxMongoId = 0;
+
+            var efDepartments = await _repository.GetAllAsync();
+            if (efDepartments.Any())
+                maxEfId = efDepartments.Max(d => d.DepartmentId);
+
+            var mongoDepartments = await _mongoRepository.GetAllAsync();
+            if (mongoDepartments.Any())
+                maxMongoId = mongoDepartments.Max(d => d.DepartmentId);
+
+            int nextId = Math.Max(maxEfId, maxMongoId) + 1;
+
+            // If DepartmentId is not set or is 0, assign the nextId
+            if (department.DepartmentId == 0)
+                department.DepartmentId = nextId;
+
+            // Insert into EF
+            await _repository.AddAsync(department);
+
+            // Insert into MongoDB (ensure Id is null so MongoDB generates a new _id)
+            department.Id = null;
+            await _mongoRepository.AddAsync(department);
+
             return _mapper.Map<DepartmentDto>(department);
         }
 
@@ -109,12 +121,7 @@ namespace TestAPI.Services
         public async Task<bool> IsDepartmentExist(string departmentName)
         {
             // Checks existence in the configured data source
-            return _dataSource switch
-            {
-                2 => await _mongoRepository.ExistsAsync(departmentName), // MongoDB
-                // 3 => await _postgresRepository.ExistsAsync(departmentName), // PostgreSQL (if implemented)
-                _ => await _repository.ExistsAsync(departmentName), // EF
-            };
+            return await IsDepartmentExistEf(departmentName) && await IsDepartmentExistMongo(departmentName);
         }
 
         // Checks existence in EF only
