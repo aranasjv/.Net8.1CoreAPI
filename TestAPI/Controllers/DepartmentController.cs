@@ -73,21 +73,29 @@ public class DepartmentController : ControllerBase
         if (DepartmentId != deptDto.DepartmentId)
             return BadRequest("Mismatched DepartmentId.");
 
-        bool isExist = await _service.IsDepartmentExist(deptDto.DepartmentName);
-        if (isExist)
-            return BadRequest("Department Name Already Exist.");
-
         try
         {
+            var existing = await _service.GetByIdAsync(DepartmentId);
+            if (existing == null)
+                return NotFound();
+
+            // Only check for name existence if the name is being changed
+            if (!string.Equals(existing.DepartmentName, deptDto.DepartmentName, StringComparison.OrdinalIgnoreCase))
+            {
+                bool isExist = await _service.IsDepartmentExist(deptDto.DepartmentName);
+                if (isExist)
+                    return BadRequest("Department Name Already Exist.");
+            }
+
             var updated = await _service.UpdateAsync(DepartmentId, deptDto);
             if (!updated)
                 return NotFound();
 
-            return Ok("Succesfully Updated Department");
+            return NoContent();
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return Problem(ex.Message);
         }
     }
 
@@ -100,11 +108,11 @@ public class DepartmentController : ControllerBase
             if (!deleted)
                 return NotFound();
 
-            return Ok("Succesfully Deleted Department");
+            return NoContent();
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return Problem(ex.Message);
         }
     }
 }
