@@ -31,12 +31,17 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 //add automapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 // Add scoped services
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IDepartmentRepository, MongoDepartmentRepository>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    return new MongoDepartmentRepository(config);
+});
+builder.Services.AddScoped<MongoDepartmentRepository>(); 
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 var app = builder.Build();
