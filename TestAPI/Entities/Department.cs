@@ -6,9 +6,6 @@ namespace TestAPI.Entities;
 
 public partial class Department
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id { get; set; } // Maps MongoDB _id
 
     [BsonElement("DepartmentId")]
     [Key]

@@ -2,12 +2,12 @@
 
 namespace TestAPI.Interfaces.Repositories
 {
-    public interface IDepartmentRepository
+    public interface IDepartmentMongoDBRepository
     {
-        Task<IEnumerable<Department>> GetAllAsync();
-        Task<Department?> GetByIdAsync(int id);
-        Task AddAsync(Department department);
-        Task UpdateAsync(Department department);
+        Task<IEnumerable<DepartmenMongoDB>> GetAllAsync();
+        Task<DepartmenMongoDB?> GetByIdAsync(int id);
+        Task AddAsync(DepartmenMongoDB department);
+        Task UpdateAsync(DepartmenMongoDB department);
         Task DeleteAsync(int id);
         Task<bool> ExistsAsync(string departmentName);
     }

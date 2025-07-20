@@ -14,6 +14,12 @@ namespace TestAPI.Mappings
 
             // Map DepartmentDto → Department
             CreateMap<DepartmentDto, Department>();
+
+            //  Map DepartmentDto → DepartmenMongoDB
+            CreateMap<DepartmentDto, DepartmenMongoDB>();
+
+            // Map DepartmenMongoDB → DepartmentDto
+            CreateMap<DepartmenMongoDB, DepartmentDto>();
         }
     }
 }

@@ -33,7 +33,7 @@ namespace TestAPI.Services
         public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
         {
             // Fetches from the configured data source (EF, MongoDB, or PostgreSQL)
-            IEnumerable<Department> departments = _dataSource switch
+            var departments = _dataSource switch
             {
                 2 => await _mongoRepository.GetAllAsync(), // MongoDB
                 // 3 => await _postgresRepository.GetAllAsync(), // PostgreSQL (if implemented)
@@ -57,6 +57,7 @@ namespace TestAPI.Services
         public async Task<DepartmentDto> AddAsync(DepartmentDto dto)
         {
             var department = _mapper.Map<Department>(dto);
+            var departmentMongoDB = _mapper.Map<DepartmenMongoDB>(dto);
 
             // Always check existence in both EF and MongoDB before insert
             bool existsInEf = await _repository.ExistsAsync(department.DepartmentName);
@@ -68,26 +69,28 @@ namespace TestAPI.Services
             int maxEfId = 0;
             int maxMongoId = 0;
 
+            // Entity Framework Insertion and checking if available
             var efDepartments = await _repository.GetAllAsync();
             if (efDepartments.Any())
                 maxEfId = efDepartments.Max(d => d.DepartmentId);
 
+            await _repository.AddAsync(department);
+
+            //MongoDB Insertion and checking if available
             var mongoDepartments = await _mongoRepository.GetAllAsync();
             if (mongoDepartments.Any())
                 maxMongoId = mongoDepartments.Max(d => d.DepartmentId);
 
+            // Calculate the next available DepartmentId for mongoDB
             int nextId = Math.Max(maxEfId, maxMongoId) + 1;
 
             // If DepartmentId is not set or is 0, assign the nextId
-            if (department.DepartmentId == 0)
-                department.DepartmentId = nextId;
-
-            // Insert into EF
-            await _repository.AddAsync(department);
+            if (departmentMongoDB.DepartmentId == 0)
+                departmentMongoDB.DepartmentId = nextId;
 
             // Insert into MongoDB (ensure Id is null so MongoDB generates a new _id)
-            department.Id = null;
-            await _mongoRepository.AddAsync(department);
+            departmentMongoDB.Id = null;
+            await _mongoRepository.AddAsync(departmentMongoDB);
 
             return _mapper.Map<DepartmentDto>(department);
         }
@@ -95,14 +98,16 @@ namespace TestAPI.Services
         public async Task<bool> UpdateAsync(int departmentId, DepartmentDto dto)
         {
             var department = await _repository.GetByIdAsync(departmentId);
-            if (department == null)
+            var departmentMongoDB = await _mongoRepository.GetByIdAsync(departmentId);
+            if (department == null || departmentMongoDB == null)
                 return false;
 
             _mapper.Map(dto, department);
+            _mapper.Map(dto, departmentMongoDB);
             // Update in EF
             await _repository.UpdateAsync(department);
             // Update in MongoDB
-            await _mongoRepository.UpdateAsync(department);
+            await _mongoRepository.UpdateAsync(departmentMongoDB);
             return true;
         }
 

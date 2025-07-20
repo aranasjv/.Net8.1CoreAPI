@@ -8,10 +8,6 @@ namespace TestAPI.Entities;
 
 public partial class Employee
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id { get; set; } // Maps MongoDB _id
-
     [BsonElement("EmployeeId")]
     [Key]
     public int EmployeeId { get; set; }

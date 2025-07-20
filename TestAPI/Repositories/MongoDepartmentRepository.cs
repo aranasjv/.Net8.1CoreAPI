@@ -6,33 +6,33 @@ using Microsoft.Extensions.Configuration;
 
 namespace TestAPI.Repositories
 {
-    public class MongoDepartmentRepository : IDepartmentRepository
+    public class MongoDepartmentRepository : IDepartmentMongoDBRepository
     {
-        private readonly IMongoCollection<Department> _departments;
+        private readonly IMongoCollection<DepartmenMongoDB> _departments;
 
         public MongoDepartmentRepository(IConfiguration configuration)
         {
             var client = new MongoClient(configuration.GetConnectionString("MongoDb"));
             var database = client.GetDatabase(configuration["MongoDbSettings:Database"]);
-            _departments = database.GetCollection<Department>("Departments");
+            _departments = database.GetCollection<DepartmenMongoDB>("Departments");
         }
 
-        public async Task<IEnumerable<Department>> GetAllAsync()
+        public async Task<IEnumerable<DepartmenMongoDB>> GetAllAsync()
         {
             return await _departments.Find(_ => true).ToListAsync();
         }
 
-        public async Task<Department?> GetByIdAsync(int id)
+        public async Task<DepartmenMongoDB?> GetByIdAsync(int id)
         {
             return await _departments.Find(d => d.DepartmentId == id).FirstOrDefaultAsync();
         }
 
-        public async Task AddAsync(Department department)
+        public async Task AddAsync(DepartmenMongoDB department)
         {
             await _departments.InsertOneAsync(department);
         }
 
-        public async Task UpdateAsync(Department department)
+        public async Task UpdateAsync(DepartmenMongoDB department)
         {
             await _departments.ReplaceOneAsync(d => d.DepartmentId == department.DepartmentId, department);
         }
